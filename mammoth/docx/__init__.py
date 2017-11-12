@@ -2,6 +2,7 @@ import os
 
 from .. import results, lists
 from .document_xml import read_document_xml_element
+from .header_xml import read_header_xml_element
 from .content_types_xml import read_content_types_xml_element
 from .relationships_xml import read_relationships_xml_element, Relationships
 from .numbering_xml import read_numbering_xml_element, Numbering
@@ -23,8 +24,10 @@ def read(fileobj):
     return results.combine([
         _read_notes(zip_file, body_readers),
         _read_comments(zip_file, body_readers),
+        _read_headers(zip_file, body_readers),
+        _read_footers(zip_file, body_readers),
     ]).bind(lambda referents:
-        _read_document(zip_file, body_readers, notes=referents[0], comments=referents[1])
+        _read_document(zip_file, body_readers, notes=referents[0], comments=referents[1], header = referents[2], footer = referents[3])
     )
 
 
@@ -49,7 +52,7 @@ def _read_comments(zip_file, body_readers):
     )
 
     
-def _read_document(zip_file, body_readers, notes, comments):
+def _read_document(zip_file, body_readers, notes, comments, header, footer):
     with zip_file.open("word/document.xml") as document_fileobj:
         document_xml = office_xml.read(document_fileobj)
         return read_document_xml_element(
@@ -57,6 +60,8 @@ def _read_document(zip_file, body_readers, notes, comments):
             body_reader=body_readers("document"),
             notes=notes,
             comments=comments,
+            header = header,
+            footer = footer
         )
 
 
@@ -75,7 +80,7 @@ def _body_readers(document_path, zip_file):
         relationships = _try_read_entry_or_default(
             zip_file, relationships_path, read_relationships_xml_element,
             default=Relationships({}))
-            
+        
         return body_xml.reader(
             numbering=numbering,
             content_types=content_types,
@@ -94,3 +99,19 @@ def _try_read_entry_or_default(zip_file, name, reader, default):
             return reader(office_xml.read(fileobj))
     else:
         return default
+
+def _read_headers(zip_file, body_readers):
+    with zip_file.open("word/header1.xml") as document_fileobj:
+        document_xml = office_xml.read(document_fileobj)
+        return read_header_xml_element(
+            document_xml,
+            body_reader=body_readers("header1"),
+        )
+
+def _read_footers(zip_file, body_readers):
+    with zip_file.open("word/footer1.xml") as document_fileobj:
+        document_xml = office_xml.read(document_fileobj)
+        return read_header_xml_element(
+            document_xml,
+            body_reader=body_readers("footer1"),
+        )

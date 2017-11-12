@@ -86,6 +86,9 @@ p:ordered-list(5) => ul|ol > li > ul|ol > li > ul|ol > li > ul|ol > li > ol > li
 r[style-name='Hyperlink'] =>
 
 p[style-name='Normal'] => p:fresh
+
+p[style-name='Header'] => p:fresh
+p[style-name='Footer'] => p:fresh
 """)
 
 

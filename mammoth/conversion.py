@@ -10,14 +10,13 @@ from . import documents, results, html_paths, images, writers, html
 from .docx.files import InvalidFileReferenceError
 from .lists import find_index
 
-
 def convert_document_element_to_html(element,
         style_map=None,
         convert_image=None,
         id_prefix=None,
         output_format=None,
         ignore_empty_paragraphs=True):
-            
+         
     if style_map is None:
         style_map = []
     
@@ -44,6 +43,8 @@ def convert_document_element_to_html(element,
         ignore_empty_paragraphs=ignore_empty_paragraphs,
         note_references=[],
         comments=comments,
+        header = header,
+        footer = footer
     )
     context = _ConversionContext(is_table_header=False)
     nodes = converter.visit(element, context)
@@ -62,7 +63,7 @@ class _ConversionContext(object):
 
 
 class _DocumentConverter(documents.element_visitor(args=1)):
-    def __init__(self, messages, style_map, convert_image, id_prefix, ignore_empty_paragraphs, note_references, comments):
+    def __init__(self, messages, style_map, convert_image, id_prefix, ignore_empty_paragraphs, note_references, comments, header, footer):
         self._messages = messages
         self._style_map = style_map
         self._id_prefix = id_prefix
@@ -71,6 +72,8 @@ class _DocumentConverter(documents.element_visitor(args=1)):
         self._referenced_comments = []
         self._convert_image = convert_image
         self._comments = comments
+        self._header = header
+        self._footer = footer
     
     def visit_image(self, image, context):
         try:
@@ -218,8 +221,10 @@ class _DocumentConverter(documents.element_visitor(args=1)):
 
 
     def visit_break(self, break_, context):
-        return self._find_html_path_for_break(break_).wrap(lambda: [])
-
+        try:
+            return self._find_html_path_for_break(break_).wrap(lambda: [])
+        except:
+            return self.visit_document(self._footer, context)
 
     def _find_html_path_for_break(self, break_):
         style = self._find_style(break_, "break")
@@ -227,6 +232,8 @@ class _DocumentConverter(documents.element_visitor(args=1)):
             return style.html_path
         elif break_.break_type == "line":
             return html_paths.path([html_paths.element("br", fresh=True)])
+        elif break_.break_type == "page":
+            return 1/0
         else:
             return html_paths.empty
 

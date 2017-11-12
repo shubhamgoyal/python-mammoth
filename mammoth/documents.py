@@ -14,6 +14,8 @@ class HasChildren(Element):
 class Document(HasChildren):
     notes = cobble.field()
     comments = cobble.field()
+    header = cobble.field()
+    footer = cobble.field()
 
 @cobble.data
 class Paragraph(HasChildren):
@@ -79,12 +81,12 @@ class Image(Element):
     open = cobble.field()
 
 
-def document(children, notes=None, comments=None):
+def document(children, notes=None, comments=None, header = None, footer = None):
     if notes is None:
         notes = Notes({})
     if comments is None:
         comments = []
-    return Document(children, notes, comments=comments)
+    return Document(children, notes, comments=comments, header = header, footer = footer)
 
 def paragraph(children, style_id=None, style_name=None, numbering=None, alignment=None):
     return Paragraph(children, style_id, style_name, numbering, alignment=alignment)
